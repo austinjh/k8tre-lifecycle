@@ -96,6 +96,9 @@ def _require_roles(actor: Actor, *roles: str) -> None:
 
 
 def get_conn() -> Iterator[Connection]:
+    # Write endpoints call conn.commit() before returning: a yield dependency's
+    # cleanup runs after the response is sent, which would let a fast follow-up
+    # request read stale state.
     with get_engine().connect() as conn:
         try:
             yield conn
@@ -272,6 +275,7 @@ def create_study(
     payload = {"id": study_id, **body.model_dump()}
     conn.execute(studies.insert().values(**payload))
     record_event(conn, "study", study_id, "created", actor, after=payload)
+    conn.commit()
     return payload
 
 
@@ -303,6 +307,7 @@ def create_project(
     }
     conn.execute(projects.insert().values(**payload))
     record_event(conn, "project", project_id, "created", actor, after=payload)
+    conn.commit()
     return payload
 
 
@@ -347,6 +352,7 @@ def transition_project(
         after={"state": transition.target},
         reason=body.reason,
     )
+    conn.commit()
     return {"id": project_id, "state": transition.target}
 
 
@@ -417,6 +423,7 @@ def create_evidence(
     }
     conn.execute(evidence.insert().values(**payload))
     record_event(conn, "evidence", evidence_id, "created", actor, after=payload)
+    conn.commit()
     return payload
 
 
@@ -450,6 +457,7 @@ def create_approval(
     }
     conn.execute(approvals.insert().values(**payload))
     record_event(conn, "approval", approval_id, body.decision, actor, after=payload)
+    conn.commit()
     return payload
 
 
@@ -489,6 +497,7 @@ def create_assessment(
         .values(control_tier=result["control_tier"])
     )
     record_event(conn, "assessment", assessment_id, "completed", actor, after=payload)
+    conn.commit()
     return {**payload, "mitigations": result["mitigations"], "evidence_required": result["evidence_required"]}
 
 
@@ -539,6 +548,7 @@ def create_quote(
     }
     conn.execute(quotes.insert().values(**payload))
     record_event(conn, "quote", quote_id, "created", actor, after=payload)
+    conn.commit()
     return payload
 
 
@@ -566,6 +576,7 @@ def accept_quote(
         after={"status": "accepted"},
         reason=body.rationale,
     )
+    conn.commit()
     return {"id": quote_id, "status": "accepted"}
 
 
@@ -605,6 +616,7 @@ def create_budget(
     }
     conn.execute(budgets.insert().values(**payload))
     record_event(conn, "budget", budget_id, "committed", actor, after=payload)
+    conn.commit()
     return payload
 
 
@@ -632,6 +644,7 @@ def create_ledger_entry(
     }
     conn.execute(ledger_entries.insert().values(**payload))
     record_event(conn, "ledger_entry", entry_id, "posted", actor, after=payload)
+    conn.commit()
     return payload
 
 
@@ -669,6 +682,7 @@ def create_usage_record(
     }
     conn.execute(usage_records.insert().values(**payload))
     record_event(conn, "usage_record", record_id, "recorded", actor, after=payload)
+    conn.commit()
     return payload
 
 
@@ -700,6 +714,7 @@ def create_capacity_snapshot(
     }
     conn.execute(capacity_snapshots.insert().values(**payload))
     record_event(conn, "capacity_snapshot", snapshot_id, "recorded", actor, after=payload)
+    conn.commit()
     return payload
 
 
@@ -735,6 +750,7 @@ def create_allocation(
     }
     conn.execute(allocations.insert().values(**payload))
     record_event(conn, "allocation", allocation_id, "reserved", actor, after=payload)
+    conn.commit()
     return payload
 
 
@@ -771,6 +787,7 @@ def create_data_request(
     }
     conn.execute(data_requests.insert().values(**payload))
     record_event(conn, "data_request", request_id, "submitted", actor, after=payload)
+    conn.commit()
     return payload
 
 
@@ -808,6 +825,7 @@ def decide_data_request(
         after={"status": status},
         reason=body.rationale,
     )
+    conn.commit()
     return {"id": request_id, "status": status}
 
 
