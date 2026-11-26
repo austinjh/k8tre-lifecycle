@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "currency": "GBP",
+  "effective_from": "2026-11-26",
+  "note": "Simulated internal recharge rates for the K8TRE POC.",
+  "rates": {
+    "vcpu_hour": 0.035,
+    "gib_hour": 0.004,
+    "gpu_hour": 1.8,
+    "storage_gib_month": 0.08,
+    "vdi_hour": 0.12,
+    "licence_day": 2.5
+  }
+}

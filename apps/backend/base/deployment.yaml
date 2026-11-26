@@ -1,0 +1,108 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+  namespace: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      serviceAccountName: k8tre-backend
+      containers:
+        - name: backend
+          image: ghcr.io/austinjh/k8tre-backend:main
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8000
+          env:
+            - name: K8TRE_NAMESPACE
+              value: "keycloak"
+            - name: KEYCLOAK_INTERNAL_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: keycloak_internal_url
+            - name: KEYCLOAK_EXTERNAL_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: keycloak_external_url
+            - name: KEYCLOAK_REALM
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: keycloak_realm
+            - name: KEYCLOAK_AUDIENCE
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: audience
+            - name: KEYCLOAK_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: backend-oidc-credentials
+                  key: client-id
+            - name: KEYCLOAK_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-oidc-credentials
+                  key: client-secret
+            - name: JSON_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: guacamole-json-secret
+                  key: GUACAMOLE_JSON_SECRET_KEY
+            - name: SESSION_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-session-secret
+                  key: session_secret
+            - name: AUTH_SIG_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: backend-session-secret
+                  key: auth_sig_secret
+            - name: LIFECYCLE_CORE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: lifecycle_core_url
+            - name: LIFECYCLE_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: lifecycle-api-credentials
+                  key: token
+            - name: LIFECYCLE_ROLE_USERS_JSON
+              valueFrom:
+                configMapKeyRef:
+                  name: backend-config
+                  key: lifecycle_role_users_json
+            - name: GUACAMOLE_HOST
+              value: "https://guacamole.${DOMAIN}"
+            - name: K8TRE_BACKEND
+              value: "https://portal.${DOMAIN}"
+            - name: SESSION_HTTPS_ONLY
+              value: "true"
+            - name: K8TRE_ENV
+              value: "${ENVIRONMENT}"
+            - name: K8TRE_EXTERNAL_DOMAIN
+              value: "${DOMAIN}"
+            - name: SSL_CERT_FILE
+              value: /etc/ssl/certs/ca-certificates.crt
+            - name: REQUESTS_CA_BUNDLE
+              value: /etc/ssl/certs/ca-certificates.crt
+          volumeMounts:
+            - name: ca-bundle
+              mountPath: /etc/ssl/certs/ca-certificates.crt
+              subPath: ca-certificates.crt
+              readOnly: true
+      volumes:
+        - name: ca-bundle
+          configMap:
+            name: k8tre-ca-bundle

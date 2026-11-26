@@ -1,0 +1,27 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: lifecycle-postgres-cluster
+  namespace: lifecycle
+  annotations:
+    argocd.argoproj.io/sync-wave: "2"
+spec:
+  instances: 1
+  enablePDB: false
+  imagePullPolicy: Always
+  bootstrap:
+    initdb:
+      database: lifecycle
+      owner: lifecycle-user
+      secret:
+        name: lifecycle-db-secret
+  storage:
+    size: 1Gi
+    storageClass: rwo-default
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi

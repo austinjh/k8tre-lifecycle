@@ -1,0 +1,43 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: lifecycle-usage-collector
+  namespace: lifecycle
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  schedule: "0 * * * *"
+  concurrencyPolicy: Forbid
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          serviceAccountName: lifecycle-core
+          restartPolicy: OnFailure
+          containers:
+            - name: collector
+              image: ghcr.io/austinjh/k8tre-lifecycle/lifecycle-core:v0.1.0
+              imagePullPolicy: Always
+              command:
+                - python
+                - -m
+                - app.workers.collector
+                - --hours
+                - "1"
+                - --post
+                - http://lifecycle-core.lifecycle.svc.cluster.local:8000
+              env:
+                - name: LIFECYCLE_INTERNAL_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: lifecycle-api-credentials
+                      key: token
+              resources:
+                requests:
+                  cpu: 50m
+                  memory: 128Mi
+                limits:
+                  cpu: 250m
+                  memory: 256Mi

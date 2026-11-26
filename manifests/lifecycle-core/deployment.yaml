@@ -1,0 +1,84 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lifecycle-core
+  namespace: lifecycle
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lifecycle-core
+  template:
+    metadata:
+      labels:
+        app: lifecycle-core
+    spec:
+      serviceAccountName: lifecycle-core
+      containers:
+        - name: lifecycle-core
+          image: ghcr.io/austinjh/k8tre-lifecycle/lifecycle-core:v0.1.0
+          imagePullPolicy: Always
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: LIFECYCLE_DB_HOST
+              value: lifecycle-postgres-cluster-rw
+            - name: LIFECYCLE_DB_PORT
+              value: "5432"
+            - name: LIFECYCLE_DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: lifecycle-db-secret
+                  key: username
+            - name: LIFECYCLE_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: lifecycle-db-secret
+                  key: password
+            - name: LIFECYCLE_DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: lifecycle-db-secret
+                  key: database
+            - name: LIFECYCLE_INTERNAL_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: lifecycle-api-credentials
+                  key: token
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: lifecycle-core
+  namespace: lifecycle
+  annotations:
+    argocd.argoproj.io/sync-wave: "3"
+spec:
+  selector:
+    app: lifecycle-core
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

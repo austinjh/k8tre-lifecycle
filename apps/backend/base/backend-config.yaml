@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backend-config
+  namespace: backend
+data:
+  keycloak_internal_url: "https://keycloak.${DOMAIN}"
+  keycloak_external_url: "https://keycloak.${DOMAIN}"
+  keycloak_realm: "k8tre-app"
+  audience: "backend"
+  lifecycle_core_url: "http://lifecycle-core.lifecycle.svc.cluster.local:8000"
+  # Demo-only role mapping from Keycloak usernames to lifecycle roles. Real
+  # deployments should use Keycloak realm/client roles instead of this map.
+  lifecycle_role_users_json: >-
+    {"alwin":["dpo","data_owner","finance"],
+     "k8tre-user":["project_manager","tre_operator","finance"],
+     "test":["researcher"],
+     "trevolution":["researcher","project_manager"]}
