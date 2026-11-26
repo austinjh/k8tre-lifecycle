@@ -15,4 +15,8 @@ data:
     {"alwin":["dpo","data_owner","finance"],
      "k8tre-user":["project_manager","tre_operator","finance"],
      "test":["researcher"],
-     "trevolution":["researcher","project_manager"]}
+     "trevolution":["researcher","project_manager"],
+     "demo-researcher":["researcher"],
+     "demo-pm":["project_manager","tre_operator"],
+     "demo-dpo":["dpo","data_owner"],
+     "demo-finance":["finance"]}
