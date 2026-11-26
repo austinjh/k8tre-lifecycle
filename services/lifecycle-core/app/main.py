@@ -465,7 +465,7 @@ def create_assessment(
     conn: Connection = Depends(get_conn),
     actor: Actor = Depends(require_actor),
 ) -> dict[str, Any]:
-    _require_roles(actor, "dpo", "tre_operator")
+    _require_roles(actor, "researcher", "project_manager", "dpo", "tre_operator")
     _get_project(conn, project_id)
     result = evaluate(body.version, body.answers)
     assessment_id = str(uuid.uuid4())

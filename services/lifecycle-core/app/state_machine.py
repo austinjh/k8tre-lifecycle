@@ -14,7 +14,7 @@ class Transition:
 
 TRANSITIONS: tuple[Transition, ...] = (
     Transition("submit", "DRAFT", "SUBMITTED", ("researcher", "project_manager")),
-    Transition("start_assessment", "SUBMITTED", "ASSESSING", ("dpo", "tre_operator")),
+    Transition("start_assessment", "SUBMITTED", "ASSESSING", ("researcher", "project_manager", "dpo", "tre_operator")),
     Transition("request_governance", "ASSESSING", "GOVERNANCE_REVIEW", ("researcher", "project_manager")),
     Transition("approve_governance", "GOVERNANCE_REVIEW", "COSTED", ("dpo", "data_owner")),
     Transition("approve_budget", "COSTED", "BUDGET_APPROVED", ("finance",)),

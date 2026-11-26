@@ -82,6 +82,33 @@ def test_transition_requires_role(client: TestClient) -> None:
     assert response.status_code == 403
 
 
+def test_researcher_can_submit_assessment(client: TestClient) -> None:
+    """The demo researcher completes the questionnaire; the DPO approves it later."""
+    _, project_id = create_study_and_project(client)
+    for action in ("submit", "start_assessment"):
+        response = client.post(
+            f"/v1/projects/{project_id}/transitions",
+            headers=headers("alice", "researcher"),
+            json={"action": action},
+        )
+        assert response.status_code == 200, response.text
+
+    assessment = client.post(
+        f"/v1/projects/{project_id}/assessments",
+        headers=headers("alice", "researcher"),
+        json={"version": "2026-11-v1", "answers": assessment_answers()},
+    )
+    assert assessment.status_code == 201, assessment.text
+    assert assessment.json()["created_by"] == "alice"
+
+    governance = client.post(
+        f"/v1/projects/{project_id}/transitions",
+        headers=headers("alice", "researcher"),
+        json={"action": "request_governance"},
+    )
+    assert governance.status_code == 200, governance.text
+
+
 def test_full_lifecycle_with_audit(client: TestClient) -> None:
     _, project_id = create_study_and_project(client)
 
