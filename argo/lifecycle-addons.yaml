@@ -1,0 +1,22 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: lifecycle-object-storage
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/austinjh/k8tre-lifecycle.git
+    targetRevision: main
+    path: manifests/object-storage
+    plugin:
+      name: kustomize-with-envsubst-v1.0
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: object-storage
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

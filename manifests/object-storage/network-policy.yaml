@@ -1,0 +1,81 @@
+# Tightened SeaweedFS policy for the lifecycle target.
+# S3 is reachable from project namespaces, lifecycle and backend only.
+apiVersion: cilium.io/v2
+kind: CiliumNetworkPolicy
+metadata:
+  name: allow-seaweedfs-access
+  namespace: object-storage
+spec:
+  endpointSelector:
+    matchLabels:
+      app.kubernetes.io/name: seaweedfs
+
+  ingress:
+    # Controlled S3 consumers: project namespaces plus lifecycle/backend.
+    - fromEndpoints:
+      - matchLabels:
+          io.cilium.k8s.namespace.labels.k8tre.io/resource-type: project-namespace
+      - matchLabels:
+          k8s:io.kubernetes.pod.namespace: lifecycle
+      - matchLabels:
+          k8s:io.kubernetes.pod.namespace: backend
+      toPorts:
+        - ports:
+            - port: "8333"
+              protocol: TCP
+
+    # Internal SeaweedFS component communication.
+    - fromEndpoints:
+      - matchLabels:
+          app.kubernetes.io/name: seaweedfs
+      toPorts:
+        - ports:
+            - port: "8080"   # Volume server
+              protocol: TCP
+            - port: "18080"  # Volume gRPC
+              protocol: TCP
+            - port: "8888"   # Filer
+              protocol: TCP
+            - port: "18888"  # Filer gRPC
+              protocol: TCP
+            - port: "9333"   # Master
+              protocol: TCP
+            - port: "19333"  # Master gRPC
+              protocol: TCP
+
+  egress:
+    - toEndpoints:
+      - matchLabels:
+          app.kubernetes.io/name: seaweedfs
+      toPorts:
+        - ports:
+            - port: "8080"
+              protocol: TCP
+            - port: "18080"
+              protocol: TCP
+            - port: "8888"
+              protocol: TCP
+            - port: "18888"
+              protocol: TCP
+            - port: "9333"
+              protocol: TCP
+            - port: "19333"
+              protocol: TCP
+            - port: "8333"
+              protocol: TCP
+
+    - toEndpoints:
+      - matchLabels:
+          k8s:io.kubernetes.pod.namespace: kube-system
+          k8s:k8s-app: kube-dns
+      toPorts:
+        - ports:
+            - port: "53"
+              protocol: UDP
+            - port: "53"
+              protocol: TCP
+
+    - toEntities:
+      - cluster
+      - host
+      - kube-apiserver
